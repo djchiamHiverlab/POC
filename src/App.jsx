@@ -4,7 +4,7 @@ import './App.css';
 
 const App = () => {
     const [selectedFile, setSelectedFile] = useState(null);
-    const [voiceId, setVoiceId] = useState(''); // State to store the voice_id
+    const [photoId, setPhotoId] = useState(''); // Updated state to store the photo_id
 
     const onFileChange = event => {
         const file = event.target.files[0];
@@ -21,20 +21,18 @@ const App = () => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append("description", "For POC");
-        formData.append("files", selectedFile, selectedFile.name); // Appending the selected file
-        formData.append("name", "HD Voice");
-
-        axios.post("https://api.elevenlabs.io/v1/voices/add", formData, {
+        const config = {
             headers: {
-                'xi-api-key': 'something',
-            }
-        })
+                'x-api-key': 'your-api-key', // Replace 'your-api-key' with your actual API key
+                'Content-Type': 'image/jpeg',
+            },
+        };
+
+        axios.post("https://upload.heygen.com/v1/talking_photo", selectedFile, config)
         .then(response => {
             console.log('Success:', response.data);
-            // Update the voiceId state with the response
-            setVoiceId(response.data.voice_id);
+            // Update the photoId state with the response
+            setPhotoId(response.data.data.talking_photo_id);
         })
         .catch(error => {
             console.error('Error uploading file:', error);
@@ -65,14 +63,14 @@ const App = () => {
         <div>
             <h1>Upload your file here</h1>
             <div>
-                <input type="file" onChange={onFileChange} accept=".mp3,.wav,.aac,.flac,.ogg,.aiff,.m4a,.wma" />
+                <input type="file" onChange={onFileChange} accept=".jpg,.jpeg" />
                 <button onClick={onFileUpload}>Upload!</button>
             </div>
             {fileData()}
-            {voiceId && (
+            {photoId && (
                 <div>
                     <h2>Response:</h2>
-                    <p>voice_id: {voiceId}</p>
+                    <p>photo_id: {photoId}</p>
                 </div>
             )}
         </div>
