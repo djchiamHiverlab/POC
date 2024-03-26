@@ -4,33 +4,39 @@ import './App.css';
 
 const App = () => {
     const [selectedFile, setSelectedFile] = useState(null);
-    const [fileHash, setFileHash] = useState(null);
+    const [voiceId, setVoiceId] = useState(''); // State to store the voice_id
 
     const onFileChange = event => {
-      const file = event.target.files[0];
-
-      //Check for 50MB
-      if (file.size > 50 * 1024 * 1024) { 
-          alert("File size cannot exceed 50MB");
-      } else {
-          setSelectedFile(file);
-      }
+        const file = event.target.files[0];
+        if (file && file.size > 50 * 1024 * 1024) { // Check for 50MB
+            alert("File size cannot exceed 50MB");
+        } else {
+            setSelectedFile(file);
+        }
     };
 
     const onFileUpload = () => {
+        if (!selectedFile) {
+            alert("Please select a file first!");
+            return;
+        }
+
         const formData = new FormData();
-        formData.append(
-            "file",
-            selectedFile,
-            selectedFile.name
-        );
-        console.log(selectedFile);
-        axios.post("https://server-upload-hsec.onrender.com/file/upload", formData)
-        .then((response) => {
-            console.log('Hash:', response.data);
-            setFileHash(response.data);
+        formData.append("description", "For POC");
+        formData.append("files", selectedFile, selectedFile.name); // Appending the selected file
+        formData.append("name", "HD Voice");
+
+        axios.post("https://api.elevenlabs.io/v1/voices/add", formData, {
+            headers: {
+                'xi-api-key': 'something',
+            }
         })
-        .catch((error) => {
+        .then(response => {
+            console.log('Success:', response.data);
+            // Update the voiceId state with the response
+            setVoiceId(response.data.voice_id);
+        })
+        .catch(error => {
             console.error('Error uploading file:', error);
         });
     };
@@ -42,17 +48,14 @@ const App = () => {
                     <h2>File Details:</h2>
                     <p>File Name: {selectedFile.name}</p>
                     <p>File Type: {selectedFile.type}</p>
-                    <p>
-                        Last Modified:{" "}
-                        {selectedFile.lastModifiedDate.toDateString()}
-                    </p>
+                    <p>Last Modified: {selectedFile.lastModifiedDate.toDateString()}</p>
                 </div>
             );
         } else {
             return (
                 <div>
                     <br />
-                    <h4>Choose a File before Pressing the Upload button</h4>
+                    <h4>Choose a file before pressing the Upload button</h4>
                 </div>
             );
         }
@@ -62,16 +65,16 @@ const App = () => {
         <div>
             <h1>Upload your file here</h1>
             <div>
-                <input type="file" onChange={onFileChange} accept=".csv,.xlsx,.txt,.db" />
+                <input type="file" onChange={onFileChange} accept=".mp3,.wav,.aac,.flac,.ogg,.aiff,.m4a,.wma" />
                 <button onClick={onFileUpload}>Upload!</button>
             </div>
             {fileData()}
-            {fileHash && (
-            <div>
-                <h2>File Hash:</h2>
-                <p>{fileHash}</p>
-            </div>
-        )}
+            {voiceId && (
+                <div>
+                    <h2>Response:</h2>
+                    <p>voice_id: {voiceId}</p>
+                </div>
+            )}
         </div>
     );
 }
